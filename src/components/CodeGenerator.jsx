@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Terminal, Code2, Play, Copy, Loader2, Check } from 'lucide-react';
 
-const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const CodeGenerator = () => {
   const [prompt, setPrompt] = useState('');
@@ -15,32 +15,30 @@ const CodeGenerator = () => {
     setCode('// Generating code... please wait.');
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama3-70b-8192',
-          messages: [
-            { 
-              role: 'system', 
-              content: 'You are an expert Verilog/SystemVerilog engineer. The user will ask you to generate a hardware module. Return ONLY the raw Verilog code block. Do not include markdown formatting like ```verilog or explanations, just the code itself.'
-            },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.2,
-          max_tokens: 1024
+          contents: [{
+            parts: [{
+              text: "System Instruction: You are an expert Verilog/SystemVerilog engineer. The user will ask you to generate a hardware module. Return ONLY the raw Verilog code block. Do not include markdown formatting like ```verilog or explanations, just the code itself.\n\nUser Request: " + prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1024
+          }
         })
       });
 
       const data = await response.json();
       
-      if (response.ok) {
-        let generatedText = data.choices[0].message.content;
+      if (response.ok && data.candidates && data.candidates.length > 0) {
+        let generatedText = data.candidates[0].content.parts[0].text;
         // Clean up markdown ticks if the model returns them anyway
-        generatedText = generatedText.replace(/```verilog/g, '').replace(/```/g, '').trim();
+        generatedText = generatedText.replace(/```verilog/gi, '').replace(/```v/gi, '').replace(/```/g, '').trim();
         setCode(generatedText);
       } else {
         setCode(`// Error: ${data.error?.message || 'Failed to generate code'}`);

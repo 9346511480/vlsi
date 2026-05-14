@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 
-const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 const AIChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,14 +31,16 @@ const AIChatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'http://localhost:5173',
+          'X-Title': 'VLSI Nexus'
         },
         body: JSON.stringify({
-          model: 'llama3-70b-8192',
+          model: 'meta-llama/llama-3-8b-instruct:free',
           messages: [
             { 
               role: 'system', 
